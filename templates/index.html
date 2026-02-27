@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} - 学生信息管理系统</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome 6 -->
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px 0;
+        }
+        .main-container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        .header {
+            margin-bottom: 30px;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 20px;
+        }
+        .stats-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+        .stats-card i {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        .stats-card .number {
+            font-size: 2rem;
+            font-weight: bold;
+        }
+        .search-box {
+            max-width: 400px;
+            margin-left: auto;
+        }
+        .table th {
+            background-color: #f8f9fa;
+            border-top: none;
+        }
+        .btn-action {
+            margin: 0 2px;
+            border-radius: 20px;
+            padding: 5px 15px;
+        }
+        .alert {
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="main-container">
+            <!-- 头部 -->
+            <div class="header d-flex justify-content-between align-items-center">
+                <h1 class="h3 mb-0">
+                    <i class="fas fa-graduation-cap text-primary me-2"></i>
+                    学生信息管理系统
+                </h1>
+                <div class="d-flex gap-2">
+                    <a href="{{ url_for('student.test_database') }}" class="btn btn-outline-info btn-sm" title="测试数据库连接">
+                        <i class="fas fa-plug"></i> 测试连接
+                    </a>
+                    <a href="{{ url_for('student.init_database') }}" class="btn btn-outline-secondary btn-sm" onclick="return confirm('确定要初始化数据库吗？这会创建必要的表。')">
+                        <i class="fas fa-database"></i> 初始化数据库
+                    </a>
+                </div>
+            </div>
+            
+            <!-- 统计卡片 -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="stats-card">
+                        <i class="fas fa-users"></i>
+                        <div class="number">{{ stats.total_students|default(0) }}</div>
+                        <div>总学生数</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stats-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                        <i class="fas fa-mars"></i>
+                        <div class="number">
+                            {% set male_count = 0 %}
+                            {% for g in stats.gender_distribution|default([]) %}
+                                {% if g.gender == '男' %}
+                                    {% set male_count = g.count %}
+                                {% endif %}
+                            {% endfor %}
+                            {{ male_count }}
+                        </div>
+                        <div>男生人数</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stats-card" style="background: linear-gradient(135deg, #5f2c82 0%, #49a09d 100%);">
+                        <i class="fas fa-venus"></i>
+                        <div class="number">
+                            {% set female_count = 0 %}
+                            {% for g in stats.gender_distribution|default([]) %}
+                                {% if g.gender == '女' %}
+                                    {% set female_count = g.count %}
+                                {% endif %}
+                            {% endfor %}
+                            {{ female_count }}
+                        </div>
+                        <div>女生人数</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stats-card" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
+                        <i class="fas fa-calendar-alt"></i>
+                        <div class="number">
+                            {% if stats.age_stats and stats.age_stats.avg_age %}
+                                {{ stats.age_stats.avg_age|int }}
+                            {% else %}
+                                0
+                            {% endif %}
+                        </div>
+                        <div>平均年龄</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 操作栏 -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <a href="{{ url_for('student.add') }}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> 添加学生
+                    </a>
+                </div>
+                <div class="col-md-6">
+                    <form action="{{ url_for('student.search') }}" method="get" class="search-box">
+                        <div class="input-group">
+                            <input type="text" name="q" class="form-control" placeholder="搜索学号、姓名或专业..." value="{{ search_keyword|default('') }}">
+                            <button class="btn btn-outline-primary" type="submit">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- 消息提示 -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category if category != 'message' else 'info' }} alert-dismissible fade show" role="alert">
+                            <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-circle' }} me-2"></i>
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <!-- 学生列表 -->
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>学号</th>
+                            <th>姓名</th>
+                            <th>性别</th>
+                            <th>年龄</th>
+                            <th>专业</th>
+                            <th>电话</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if students %}
+                            {% for student in students %}
+                            <tr>
+                                <td><span class="badge bg-secondary">{{ student.student_id }}</span></td>
+                                <td><i class="fas fa-user me-1 text-primary"></i>{{ student.name }}</td>
+                                <td>
+                                    {% if student.gender == '男' %}
+                                        <i class="fas fa-mars text-primary"></i>
+                                    {% elif student.gender == '女' %}
+                                        <i class="fas fa-venus text-danger"></i>
+                                    {% else %}
+                                        <i class="fas fa-genderless"></i>
+                                    {% endif %}
+                                    {{ student.gender }}
+                                </td>
+                                <td>{{ student.age|default('-') }}</td>
+                                <td>{{ student.major|default('-') }}</td>
+                                <td>{{ student.phone|default('-') }}</td>
+                                <td>
+                                    <a href="{{ url_for('student.edit', student_id=student.student_id) }}" 
+                                       class="btn btn-sm btn-warning btn-action" title="编辑">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{{ url_for('student.delete', student_id=student.student_id) }}" 
+                                       class="btn btn-sm btn-danger btn-action" 
+                                       onclick="return confirm('确定要删除学生 {{ student.name }} 吗？此操作不可恢复！')"
+                                       title="删除">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="7" class="text-center text-muted py-4">
+                                    <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
+                                    {% if search_keyword %}
+                                        没有找到与 "{{ search_keyword }}" 相关的学生
+                                    {% else %}
+                                        暂无学生数据，请点击"添加学生"按钮添加
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- 专业分布 -->
+            {% if stats.major_distribution %}
+            <div class="mt-4">
+                <h5 class="mb-3"><i class="fas fa-chart-pie me-2"></i>专业分布</h5>
+                <div class="row">
+                    {% for major in stats.major_distribution %}
+                    <div class="col-md-2 col-6 mb-2">
+                        <div class="badge bg-light text-dark p-2 w-100">
+                            {{ major.major }}: <span class="fw-bold">{{ major.count }}</span>人
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.bootcdn.net/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

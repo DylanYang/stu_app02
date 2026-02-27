@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} - 学生信息管理系统</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome 6 -->
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            min-height: 100vh;
+            padding: 20px 0;
+        }
+        .form-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        .form-header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 20px;
+        }
+        .form-header h2 {
+            color: #333;
+            font-weight: 600;
+        }
+        .student-id-badge {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 30px;
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+        .form-label {
+            font-weight: 600;
+            color: #444;
+            margin-bottom: 8px;
+        }
+        .form-label i {
+            color: #f5576c;
+            margin-right: 5px;
+        }
+        .required-star {
+            color: #dc3545;
+            margin-left: 3px;
+        }
+        .form-control, .form-select {
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            padding: 12px 15px;
+            transition: all 0.3s;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: #f5576c;
+            box-shadow: 0 0 0 3px rgba(245, 87, 108, 0.1);
+        }
+        .form-control[readonly] {
+            background-color: #f8f9fa;
+            cursor: not-allowed;
+        }
+        .btn-submit {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 10px;
+            font-weight: 600;
+            width: 100%;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(245, 87, 108, 0.4);
+        }
+        .btn-back {
+            background: white;
+            color: #f5576c;
+            border: 2px solid #f5576c;
+            padding: 12px 30px;
+            border-radius: 10px;
+            font-weight: 600;
+            width: 100%;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        .btn-back:hover {
+            background: #f5576c;
+            color: white;
+        }
+        .alert {
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="form-container">
+            <div class="form-header">
+                <h2><i class="fas fa-edit text-warning me-2"></i>{{ title }}</h2>
+                <p>修改学生的基本信息，带 <span class="text-danger">*</span> 为必填项</p>
+            </div>
+            
+            <!-- 学号标签 -->
+            <div class="text-center">
+                <div class="student-id-badge">
+                    <i class="fas fa-id-card me-2"></i>学号：{{ student.student_id }}
+                </div>
+            </div>
+            
+            <!-- 消息提示 -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                            <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-circle' }} me-2"></i>
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <form method="POST" action="{{ url_for('student.edit', student_id=student.student_id) }}" id="studentForm">
+                <!-- 学号（只读） -->
+                <div class="mb-3">
+                    <label class="form-label">
+                        <i class="fas fa-id-card"></i>学号
+                    </label>
+                    <input type="text" 
+                           class="form-control" 
+                           value="{{ student.student_id }}" 
+                           readonly 
+                           disabled>
+                    <div class="form-text">学号不可修改</div>
+                </div>
+                
+                <!-- 姓名 -->
+                <div class="mb-3">
+                    <label class="form-label">
+                        <i class="fas fa-user"></i>姓名 <span class="required-star">*</span>
+                    </label>
+                    <input type="text" 
+                           class="form-control" 
+                           id="name" 
+                           name="name" 
+                           value="{{ student.name }}"
+                           required 
+                           maxlength="50"
+                           placeholder="请输入学生姓名">
+                </div>
+                
+                <!-- 性别 -->
+                <div class="mb-3">
+                    <label class="form-label">
+                        <i class="fas fa-venus-mars"></i>性别 <span class="required-star">*</span>
+                    </label>
+                    <select class="form-select" id="gender" name="gender" required>
+                        <option value="男" {% if student.gender == '男' %}selected{% endif %}>男</option>
+                        <option value="女" {% if student.gender == '女' %}selected{% endif %}>女</option>
+                        <option value="其他" {% if student.gender == '其他' %}selected{% endif %}>其他</option>
+                    </select>
+                </div>
+                
+                <!-- 年龄 -->
+                <div class="mb-3">
+                    <label class="form-label">
+                        <i class="fas fa-calendar-alt"></i>年龄
+                    </label>
+                    <input type="number" 
+                           class="form-control" 
+                           id="age" 
+                           name="age" 
+                           value="{{ student.age if student.age else '' }}"
+                           min="1" 
+                           max="150"
+                           placeholder="请输入年龄 (1-150)">
+                </div>
+                
+                <!-- 专业 -->
+                <div class="mb-3">
+                    <label class="form-label">
+                        <i class="fas fa-book"></i>专业
+                    </label>
+                    <input type="text" 
+                           class="form-control" 
+                           id="major" 
+                           name="major" 
+                           value="{{ student.major if student.major else '' }}"
+                           maxlength="100"
+                           placeholder="请输入专业名称">
+                </div>
+                
+                <!-- 电话 -->
+                <div class="mb-3">
+                    <label class="form-label">
+                        <i class="fas fa-phone"></i>电话
+                    </label>
+                    <input type="tel" 
+                           class="form-control" 
+                           id="phone" 
+                           name="phone" 
+                           value="{{ student.phone if student.phone else '' }}"
+                           maxlength="20"
+                           placeholder="请输入电话号码">
+                </div>
+                
+                <!-- 按钮组 -->
+                <div class="row mt-4">
+                    <div class="col-md-6 mb-2">
+                        <button type="submit" class="btn-submit">
+                            <i class="fas fa-save me-2"></i>更新信息
+                        </button>
+                    </div>
+                    <div class="col-md-6">
+                        <a href="{{ url_for('student.index') }}" class="btn-back">
+                            <i class="fas fa-arrow-left me-2"></i>返回列表
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        // 表单验证
+        document.getElementById('studentForm').addEventListener('submit', function(e) {
+            // 姓名验证
+            const name = document.getElementById('name');
+            if (!name.value.trim()) {
+                alert('姓名不能为空');
+                e.preventDefault();
+                return false;
+            }
+            
+            // 性别验证
+            const gender = document.getElementById('gender');
+            if (!gender.value) {
+                alert('请选择性别');
+                e.preventDefault();
+                return false;
+            }
+            
+            // 年龄验证（如果填写）
+            const age = document.getElementById('age');
+            if (age.value) {
+                const ageNum = parseInt(age.value);
+                if (isNaN(ageNum) || ageNum < 1 || ageNum > 150) {
+                    alert('年龄必须在1-150之间');
+                    e.preventDefault();
+                    return false;
+                }
+            }
+            
+            return true;
+        });
+    </script>
+</body>
+</html>

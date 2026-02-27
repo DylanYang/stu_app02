@@ -1,0 +1,53 @@
+student_management/
+├── app.py                 # 应用入口
+├── config.py              # 配置文件
+├── requirements.txt       # 依赖包
+├── models/                # 模型层
+│   ├── __init__.py
+│   ├── database.py        # 数据库连接
+│   └── student_model.py   # 学生模型
+├── controllers/           # 控制器层
+│   ├── __init__.py
+│   └── student_controller.py
+├── views/                 # 视图层
+│   ├── index.html
+│   ├── add.html
+│   └── edit.html
+└── static/                # 静态文件
+    ├── css/
+    └── js/
+
+
+使用说明
+1. 安装步骤
+bash
+# 1. 克隆或创建项目文件
+# 2. 进入项目目录
+cd stu_app_02
+
+# 3. 给安装脚本添加执行权限（Linux/Mac）
+chmod +x setup.sh
+
+# 4. 运行安装脚本
+./setup.sh
+
+# 或者手动安装：
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+2. 配置数据库
+bash
+# 1. 编辑 .env 文件
+# 2. 设置你的MySQL密码
+# 3. 运行数据库初始化
+mysql -u root -p < init_db.sql
+3. 运行应用
+bash
+python app.py
+4. 访问系统
+打开浏览器访问：http://127.0.0.1:5000
+
+5. 运行测试
+bash
+python test_app.py
+现在你有了一个完整的、符合MVC模式的学生信息管理系统！所有文件都按照你的目录结构组织好了。
